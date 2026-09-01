@@ -18,6 +18,8 @@ services:
         value: "10"
       - key: EPIC_THRESHOLD
         value: "30"
+      - key: MAX_COMMENTS_PER_USER
+        value: "10"
       - key: STATE_FILE
         value: /var/data/state.json
     disk:

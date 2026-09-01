@@ -1,15 +1,24 @@
 # Cel mai tare județ din România 🏆
 
-Joc live pentru TikTok, cu design de tip "loading screen" de battle
-royale (fundal navy, contur auriu, carduri de raritate). Fiecare
-comentariu cu numele/codul unui județ îi dă +1 punct — atât pentru
-județ, cât și pentru clasamentul personal al celui care a scris. Dacă
-persoana trimite și un cadou, punctele se dublează (×2), iar pe ecran
-apare o "fighter card" cu numele ei, avatar cu inițiale, județul
-susținut și punctele câștigate — cu stil vizual diferit după raritatea
-cadoului: **comun → rar → epic → legendar** (cadourile mari, peste
-prag, declanșează animația legendară, cu raze de lumină și ecran
-întunecat dramatic).
+Joc live pentru TikTok, format **9:16** (vertical, gata pentru filmat
+pe telefon sau pentru OBS), cu design de tip "loading screen" de
+battle royale (fundal navy, contur auriu, carduri de raritate).
+
+Fiecare comentariu cu numele/codul unui județ îi dă +1 punct — atât
+pentru județ, cât și pentru clasamentul personal al celui care a
+scris — și apare o mică animație cu numele lui chiar lângă județ.
+Fiecare persoană poate puncta cu maxim **10 comentarii** (anti-spam);
+peste asta, comentariile ei tot ajută la atribuirea cadourilor, dar nu
+mai punctează.
+
+Dacă persoana trimite și un **cadou**, punctele se dublează (×2), iar
+pe ecran apare o "fighter card" mare, cu numele ei, avatar cu inițiale,
+județul susținut și punctele câștigate — cu stil vizual diferit după
+raritatea cadoului: **comun → rar → epic → legendar** (cadourile mari,
+peste prag, declanșează animația legendară, cu raze de lumină și ecran
+întunecat dramatic). Dacă cineva dă un cadou **înainte** să scrie din
+ce județ e, cadoul nu se pierde — rămâne "în așteptare" și se aplică
+automat, cu tot cu animație, de îndată ce scrie un județ valid.
 
 Pe hartă doar **top 5 județe** au culoare (auriu/argintiu/bronz/cyan/
 mov), restul rămân gri-uniform cu numărul de loc afișat clar, cu
@@ -75,12 +84,20 @@ că parola nu e configurată, în loc să lase pe oricine să intre.
 În `/admin` poți testa jocul fără să fii live, cu un buton pentru
 fiecare raritate de cadou:
 
-- **„+1 comentariu”** — simulează un comentariu normal (fără card).
+- **„+1 comentariu”** — simulează un comentariu normal (fără card, dar
+  cu mica animație cu numele lângă județ).
 - **„Cadou comun”** — cadou mic, sub prag (5 → 10 puncte).
 - **„Cadou rar”** — (15 → 30 puncte).
 - **„Cadou epic”** — (50 → 100 puncte).
 - **„🔥 Cadou LEGENDAR (98+)”** — declanșează animația mare, cu raze
   de lumină și ecran întunecat.
+
+Mai jos, în același panou, poți testa special fluxul de "cadou dat
+înainte de a scrie județul":
+1. Apasă **„1️⃣ Cadou fără județ (60 pct)”** — pune un cadou în
+   așteptare pentru un utilizator de test separat.
+2. Scrie un cod de județ în câmp și apasă **„2️⃣ Scrie județul acum”**
+   — cadoul de la pasul 1 se aplică automat, cu tot cu animație.
 
 Când ești gata să te conectezi la propriul live TikTok, din `/admin`
 scrie username-ul tău (fără @) și apasă **„Conectează-te la live”**.
@@ -226,12 +243,23 @@ la **Environment → Environment Variables**.
 ## 5. Cum funcționează scorul
 
 - Cineva scrie în chat `CJ`, `Cluj`, `cluj` (fără diacritice merge la
-  fel) → județul Cluj primește **+1 punct**, iar persoana respectivă
-  urcă un punct în clasamentul personal de susținători.
+  fel) → județul Cluj primește **+1 punct**, persoana urcă un punct în
+  clasamentul personal de susținători, și apare o mică animație cu
+  numele ei chiar lângă județ (nu cardul mare — acela e doar la cadouri).
+- Fiecare persoană poate puncta cu **maxim 10 comentarii** (configurabil
+  din `MAX_COMMENTS_PER_USER`) — o măsură simplă anti-spam, ca cineva
+  să nu poată umfla artificial un județ scriind codul de sute de ori.
+  Comentariile de după al 10-lea tot actualizează "ultimul județ" al
+  persoanei (pentru atribuirea cadourilor), doar nu mai adaugă puncte.
 - Dacă acea persoană trimite și un **cadou**, se calculează valoarea
   lui în "diamante" TikTok, se dublează (**×2**) și se adaugă la
   ultimul județ pe care l-a scris în chat, plus la punctajul ei
   personal.
+- **Dacă cineva dă un cadou înainte să scrie vreun județ** (ex. tocmai
+  a intrat pe live și dă cadou din prima), cadoul nu se pierde — rămâne
+  "în așteptare" pentru acea persoană. De îndată ce scrie un județ
+  valid, cadoul e aplicat automat pe acel județ, cu tot cu animație,
+  exact ca și cum ar fi venit normal.
 - Fiecare cadou primește o **raritate**, in functie de valoarea brută
   (înainte de ×2): sub 10 = **comun**, 10-29 = **rar**, 30-99 =
   **epic**, peste 99 = **legendar**. Pragurile sunt configurabile din
@@ -244,13 +272,17 @@ la **Environment → Environment Variables**.
 - **Top 5 județe** de pe hartă au o culoare solidă distinctă în funcție
   de loc: auriu (#1), argintiu (#2), portocaliu (#3), cyan (#4), mov
   (#5) — restul județelor rămân gri-uniform, cu numărul de loc afișat
-  clar, cu cifre mari, negre.
+  clar, cu cifre mari, negre, pe fundal deschis (contrast maxim).
 - **Top 5 susținători** (persoanele cu cele mai multe puncte adunate)
   apar mereu într-un panou deasupra hărții, cu insignă de scut și
   coroană pentru primul loc.
 - **București** e prea mic pe harta reală ca să se vadă ceva pe el,
   așa că are propriul cerc, separat, în colțul hărții, cu aceeași
   colorare și logică de rang ca restul.
+- Întreaga pagină de afișaj e în **format 9:16** (vertical) — se
+  ajustează automat, cu bare negre pe laterale dacă fereastra nu are
+  deja acest raport, gata pentru filmat pe telefon sau capturat direct
+  ca sursă verticală în OBS.
 - Toate actualizările (hartă, susținători, animații) apar instant
   pentru toată lumea care are pagina deschisă, prin WebSocket.
 
@@ -268,22 +300,23 @@ vezi/editează lista din `counties.py`.
 .
 ├── app.py                # server FastAPI: pagini, rute, WebSocket, salvare periodica
 ├── auth.py                 # login cu parola pentru /admin (sesiuni in memorie)
-├── tiktok_bridge.py           # conectarea la TikTokLive + calcul raritate cadou
-├── counties.py                  # cele 42 de judete + logica de identificare
-├── game_state.py                  # scoruri judete + sustinatori + persistenta pe disc
-├── connection_manager.py            # broadcast WebSocket catre browsere
+├── scoring.py                # regulile de scor (plafon comentarii, cadou "in asteptare", raritate)
+├── tiktok_bridge.py             # conectarea la TikTokLive (apeleaza scoring.py)
+├── counties.py                    # cele 42 de judete + logica de identificare
+├── game_state.py                    # scoruri judete + sustinatori + persistenta pe disc
+├── connection_manager.py              # broadcast WebSocket catre browsere
 ├── requirements.txt
-├── Procfile                          # comanda de pornire pentru Render
-├── render.yaml                         # configurare automata Render (plan + disc)
+├── Procfile                            # comanda de pornire pentru Render
+├── render.yaml                           # configurare automata Render (plan + disc)
 ├── .env.example
 └── static/
-    ├── index.html                      # pagina de afisaj (fara controale)
-    ├── admin.html                        # pagina de admin (login + controale + clasament complet)
-    ├── admin.js                            # logica paginii de admin
-    ├── admin.css                             # stiluri specifice paginii de admin
-    ├── style.css                               # design comun (impartit de ambele pagini)
-    ├── app.js                                    # logica paginii de afisaj (WebSocket, harta, sustinatori)
-    └── data/romania.js                             # coordonatele SVG ale celor 42 de judete
+    ├── index.html                        # pagina de afisaj (format 9:16, fara controale)
+    ├── admin.html                          # pagina de admin (login + controale + clasament complet)
+    ├── admin.js                              # logica paginii de admin
+    ├── admin.css                               # stiluri specifice paginii de admin
+    ├── style.css                                 # design comun (letterbox 9:16, harta, fighter card)
+    ├── app.js                                      # logica paginii de afisaj (WebSocket, harta, sustinatori)
+    └── data/romania.js                               # coordonatele SVG ale celor 42 de judete
 ```
 
 ## 7. Idei de extins mai departe

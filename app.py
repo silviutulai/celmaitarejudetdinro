@@ -7,8 +7,8 @@ Ruleaza local:
 Pe Render, foloseste Procfile-ul din acest repo.
 
 Pagini:
-  /        - afisajul jocului (harta + top 5 sustinatori), curat, fara
-             butoane - asta e pagina pe care o filmezi.
+  /        - afisajul jocului (format 9:16, harta + top 5 sustinatori),
+             curat, fara butoane - asta e pagina pe care o filmezi.
   /admin   - panou de control + clasament complet, protejat cu parola
              din variabila de mediu ADMIN_PASSWORD.
 """
@@ -23,10 +23,10 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import auth
-from counties import find_county
 from connection_manager import MANAGER
 from game_state import STATE
-from tiktok_bridge import BRIDGE, MEGA_GIFT_THRESHOLD, RARE_THRESHOLD, EPIC_THRESHOLD, rarity_for
+from tiktok_bridge import BRIDGE
+from scoring import process_comment, process_gift, rarity_for, MAX_COMMENTS_PER_USER
 
 BASE_DIR = pathlib.Path(__file__).parent
 STATIC_DIR = BASE_DIR / "static"
@@ -70,11 +70,16 @@ class ConnectPayload(BaseModel):
     username: str
 
 
-class ManualHitPayload(BaseModel):
+class ManualCommentPayload(BaseModel):
     text: str
-    gift: bool = False
-    value: int = 0        # valoare simulata in "diamante", doar pentru cadouri (Mod test)
     user: str = "test_user"
+
+
+class ManualGiftPayload(BaseModel):
+    value: int          # valoare bruta simulata, in "diamante"
+    user: str = "test_user"
+    county: str = ""     # daca e gol, cadoul e pus "in asteptare" (test flow)
+    gift_name: str = "Cadou de test"
 
 
 class LoginPayload(BaseModel):
@@ -129,7 +134,6 @@ async def admin_logout(response: Response, admin_session: Optional[str] = Cookie
 @app.get("/api/state")
 async def get_state():
     data = STATE.snapshot()
-    # pentru admin, dam si clasamentul complet de judete + mai multi sustinatori
     data["counties_ranked"] = [
         {"id": c.id, "code": c.code, "title": c.title, "score": c.score}
         for c in STATE.leaderboard(42)
@@ -137,6 +141,7 @@ async def get_state():
     data["top_supporters"] = [
         {"name": s.name, "points": s.points} for s in STATE.top_supporters(20)
     ]
+    data["pending_gifts_count"] = len(STATE.pending_gift_by_user)
     return JSONResponse(data)
 
 
@@ -165,49 +170,51 @@ async def reset_game(_: bool = Depends(require_admin)):
     return {"ok": True}
 
 
-@app.post("/api/manual-hit")
-async def manual_hit(payload: ManualHitPayload, _: bool = Depends(require_admin)):
+@app.post("/api/manual-comment")
+async def manual_comment(payload: ManualCommentPayload, _: bool = Depends(require_admin)):
     """
-    Endpoint pentru 'Mod test' (din /admin): simuleaza un comentariu
-    sau un cadou de o anumita raritate, ca sa vezi animatiile inainte
-    de a fi live.
+    Mod test: simuleaza un comentariu (respecta plafonul de
+    MAX_COMMENTS_PER_USER si rezolva orice cadou pus 'in asteptare'
+    pentru acest user de test).
     """
-    county = find_county(payload.text)
-    if not county:
-        return JSONResponse({"ok": False, "message": "Judet necunoscut."}, status_code=404)
+    user_id = f"test:{payload.user.strip() or 'test_user'}"
+    result = process_comment(user_id, payload.user.strip() or "test_user", payload.text)
+    if not result["hit"] and not result["gift"]:
+        return JSONResponse({"ok": False, "message": "Județ necunoscut."}, status_code=404)
+    if result["hit"]:
+        await MANAGER.broadcast(result["hit"])
+    if result["gift"]:
+        await MANAGER.broadcast(result["gift"])
+    return {"ok": True, "resolved_pending_gift": result["gift"] is not None}
 
+
+@app.post("/api/manual-gift")
+async def manual_gift(payload: ManualGiftPayload, _: bool = Depends(require_admin)):
+    """
+    Mod test: simuleaza un cadou.
+    - daca 'county' e completat, il aplica direct pe acel judet (test
+      rapid al animatiei, indiferent de istoricul userului).
+    - daca 'county' e gol, simuleaza cazul real "a dat cadou fara sa
+      scrie inainte judetul" - cadoul ramane 'in asteptare' pentru
+      user-ul de test pana la urmatorul lui comentariu valid.
+    """
     user_label = payload.user.strip() or "test_user"
+    user_id = f"test:{user_label}"
+    raw_value = max(payload.value, 1)
 
-    if payload.gift:
-        gift_value = max(payload.value, 1)
-        points = gift_value * 2
-        rarity = rarity_for(gift_value)
-    else:
-        gift_value = 0
-        points = 1
-        rarity = None
+    if payload.county.strip():
+        from counties import find_county
+        county = find_county(payload.county)
+        if not county:
+            return JSONResponse({"ok": False, "message": "Județ necunoscut."}, status_code=404)
+        STATE.last_county_by_user[user_id] = county["id"]
 
-    c = STATE.add_point(county["id"], points)
-    STATE.add_supporter_points(f"test:{user_label}", user_label, points)
+    gift_event = process_gift(user_id, user_label, raw_value, payload.gift_name)
+    if gift_event:
+        await MANAGER.broadcast(gift_event)
+        return {"ok": True, "pending": False}
 
-    event = {
-        "event": "mega_gift" if rarity == "legendary" else ("gift" if payload.gift else "hit"),
-        "county": c.code,
-        "title": c.title,
-        "score": c.score,
-        "points": points,
-        "value": gift_value,
-        "gift": payload.gift,
-        "user": user_label,
-        "top_supporters": [
-            {"name": s.name, "points": s.points} for s in STATE.top_supporters(5)
-        ],
-    }
-    if payload.gift:
-        event["rarity"] = rarity
-        event["gift_name"] = "Cadou de test"
-    await MANAGER.broadcast(event)
-    return {"ok": True}
+    return {"ok": True, "pending": True, "message": f"Cadou pus în așteptare pentru {user_label}."}
 
 
 # ==================== WEBSOCKET (public, doar citire) ====================

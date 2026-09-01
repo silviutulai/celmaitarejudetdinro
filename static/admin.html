@@ -58,7 +58,7 @@
 
     <div class="panel">
       <div class="panel-title">🧪 Mod test (fără live)</div>
-      <p class="admin-hint">Simulează un comentariu sau cadouri de fiecare raritate.</p>
+      <p class="admin-hint">Simulează un comentariu sau cadouri de fiecare raritate. Numele de utilizator de test e fix (test_user) pentru butoanele rapide de mai jos.</p>
       <input class="text-input" id="testInput" type="text" placeholder="ex: CJ, Cluj, AB…" style="margin-bottom:9px;">
       <div class="row-btns">
         <button class="btn btn-rarity" id="btnTestComment">+1 comentariu</button>
@@ -69,6 +69,17 @@
         <button class="btn btn-rarity epic" id="btnTestEpic">Cadou epic</button>
       </div>
       <button class="btn btn-rarity legendary" id="btnTestLegendary" style="margin-top:8px;">🔥 Cadou LEGENDAR (98+)</button>
+
+      <div style="margin-top:16px; padding-top:14px; border-top:1px solid #232B3D;">
+        <p class="admin-hint" style="margin-bottom:9px;">
+          Testează fluxul „cadou dat înainte de a scrie județul” — pasul 1 pune cadoul în așteptare pentru un utilizator de test separat (<code>fara_judet</code>), pasul 2 scrie județul lui și rezolvă automat cadoul, cu tot cu animație.
+        </p>
+        <div class="row-btns">
+          <button class="btn btn-rarity" id="btnPendingGift">1️⃣ Cadou fără județ (60 pct)</button>
+          <button class="btn btn-rarity" id="btnResolvePending">2️⃣ Scrie județul acum</button>
+        </div>
+        <div class="admin-hint" id="pendingStatus" style="margin-top:8px; margin-bottom:0;"></div>
+      </div>
     </div>
 
     <div class="panel">

@@ -5,16 +5,8 @@ Aceasta librarie NU este un API oficial TikTok - citeste acelasi
 websocket "Webcast" pe care il vede orice viewer al unui live. Nu ai
 nevoie de login sau parola, doar de @username-ul contului care da live.
 
-Fluxul:
-  - un comentariu care contine codul/numele unui judet -> +1 punct
-    pentru judet, si +1 in clasamentul personal al utilizatorului
-    (sustinatori)
-  - un cadou trimis de un utilizator -> se calculeaza valoarea lui in
-    "diamante" TikTok, se dubleaza (x2) si se aduna la ultimul judet
-    scris de acel utilizator in chat, plus in clasamentul lui personal
-  - fiecare cadou primeste o "raritate" in functie de valoare:
-    comun / rar / epic / legendar (peste prag) - folosita de front-end
-    pentru animatia de tip "fighter card"
+Regulile de scor efective sunt in scoring.py (comun pentru live si
+pentru modul test din /admin).
 """
 import asyncio
 import os
@@ -36,31 +28,15 @@ try:
 except ImportError:  # numele exact poate difera intre versiuni
     RoomUserSeqEvent = None
 
-from counties import find_county
 from game_state import STATE
 from connection_manager import MANAGER
+from scoring import process_comment, process_gift
 
 # Cheie optionala Euler Stream (serverul de semnare folosit de TikTokLive)
 # care ridica limitele gratuite de conectare. Vezi README.md.
 _API_KEY = os.getenv("EULERSTREAM_API_KEY")
 if _API_KEY:
     WebDefaults.tiktok_sign_api_key = _API_KEY
-
-# Praguri de raritate pentru cadouri, in functie de valoarea bruta
-# (numarul de "diamante", inainte de dublarea x2).
-RARE_THRESHOLD = int(os.getenv("RARE_THRESHOLD", "10"))
-EPIC_THRESHOLD = int(os.getenv("EPIC_THRESHOLD", "30"))
-MEGA_GIFT_THRESHOLD = int(os.getenv("MEGA_GIFT_THRESHOLD", "99"))  # = prag "legendar"
-
-
-def rarity_for(raw_value: int) -> str:
-    if raw_value > MEGA_GIFT_THRESHOLD:
-        return "legendary"
-    if raw_value >= EPIC_THRESHOLD:
-        return "epic"
-    if raw_value >= RARE_THRESHOLD:
-        return "rare"
-    return "common"
 
 
 def _extract_diamond_value(event: GiftEvent) -> int:
@@ -117,27 +93,13 @@ class TikTokBridge:
         @client.on(CommentEvent)
         async def on_comment(event: CommentEvent):
             try:
-                county = find_county(event.comment)
-                if not county:
-                    return
-                c = STATE.add_point(county["id"], 1)
-                if c is None:
-                    return
-                STATE.last_county_by_user[event.user.unique_id] = county["id"]
                 user_label = event.user.nickname or event.user.unique_id
-                STATE.add_supporter_points(event.user.unique_id, user_label, 1)
-                await MANAGER.broadcast({
-                    "event": "hit",
-                    "county": c.code,
-                    "title": c.title,
-                    "score": c.score,
-                    "points": 1,
-                    "gift": False,
-                    "user": user_label,
-                    "top_supporters": [
-                        {"name": s.name, "points": s.points} for s in STATE.top_supporters(5)
-                    ],
-                })
+                result = process_comment(event.user.unique_id, user_label, event.comment)
+                if result["hit"]:
+                    await MANAGER.broadcast(result["hit"])
+                if result["gift"]:
+                    # un cadou care astepta un judet tocmai s-a rezolvat
+                    await MANAGER.broadcast(result["gift"])
             except Exception as exc:  # nu lasa un comentariu ciudat sa pice conexiunea
                 client.logger.warning(f"Eroare la procesarea comentariului: {exc}")
 
@@ -152,38 +114,18 @@ class TikTokBridge:
                 if getattr(gift, "type", None) == 1 and event.streaking:
                     return
 
-                county_id = STATE.last_county_by_user.get(event.user.unique_id)
-                if not county_id:
-                    return  # userul n-a scris inca niciun judet in chat
-
                 repeat_count = getattr(event, "repeat_count", 1) or 1
                 unit_value = _extract_diamond_value(event)
-                gift_value = unit_value * repeat_count  # valoare bruta, inainte de x2
-                points = gift_value * 2  # regula: cadourile se pun x2
-                rarity = rarity_for(gift_value)
-
-                c = STATE.add_point(county_id, points)
-                if c is None:
-                    return
-
+                gift_value = unit_value * repeat_count
                 user_label = event.user.nickname or event.user.unique_id
-                STATE.add_supporter_points(event.user.unique_id, user_label, points)
                 gift_name = getattr(gift, "name", "cadou")
 
-                await MANAGER.broadcast({
-                    "event": "mega_gift" if rarity == "legendary" else "gift",
-                    "county": c.code,
-                    "title": c.title,
-                    "score": c.score,
-                    "points": points,
-                    "value": gift_value,
-                    "rarity": rarity,
-                    "user": user_label,
-                    "gift_name": gift_name,
-                    "top_supporters": [
-                        {"name": s.name, "points": s.points} for s in STATE.top_supporters(5)
-                    ],
-                })
+                gift_event = process_gift(event.user.unique_id, user_label, gift_value, gift_name)
+                if gift_event:
+                    await MANAGER.broadcast(gift_event)
+                # daca gift_event e None, cadoul a fost pus "in asteptare"
+                # (userul n-a scris inca niciun judet) - se rezolva automat
+                # la urmatorul lui comentariu valid, vezi process_comment().
             except Exception as exc:
                 client.logger.warning(f"Eroare la procesarea cadoului: {exc}")
 

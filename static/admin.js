@@ -150,13 +150,13 @@ btnReset.addEventListener('click', async () => {
 });
 
 // ---------------- mod test ----------------
-function submitTest(gift, value, userLabel){
+function submitTestComment(userLabel){
   const val = testInput.value.trim();
   if (!val) { testInput.focus(); return; }
-  fetch('/api/manual-hit', {
+  fetch('/api/manual-comment', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text: val, gift, value: value || 0, user: userLabel || 'test_user' })
+    body: JSON.stringify({ text: val, user: userLabel || 'test_user' })
   }).then(r => r.json()).then(d => {
     if (!d.ok){
       testInput.style.borderColor = '#FF5C7A';
@@ -164,12 +164,60 @@ function submitTest(gift, value, userLabel){
     }
   });
 }
-btnTestComment.addEventListener('click', () => submitTest(false, 0));
-btnTestCommon.addEventListener('click', () => submitTest(true, 5, 'test_comun'));
-btnTestRare.addEventListener('click', () => submitTest(true, 15, 'test_rar'));
-btnTestEpic.addEventListener('click', () => submitTest(true, 50, 'test_epic'));
-btnTestLegendary.addEventListener('click', () => submitTest(true, 150, 'test_legendar'));
-testInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitTest(false, 0); });
+
+function submitTestGift(value, userLabel){
+  const val = testInput.value.trim();
+  if (!val) { testInput.focus(); return; }
+  fetch('/api/manual-gift', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ value, user: userLabel || 'test_user', county: val })
+  }).then(r => r.json()).then(d => {
+    if (!d.ok){
+      testInput.style.borderColor = '#FF5C7A';
+      setTimeout(() => testInput.style.borderColor = '', 500);
+    }
+  });
+}
+btnTestComment.addEventListener('click', () => submitTestComment('test_user'));
+btnTestCommon.addEventListener('click', () => submitTestGift(5, 'test_comun'));
+btnTestRare.addEventListener('click', () => submitTestGift(15, 'test_rar'));
+btnTestEpic.addEventListener('click', () => submitTestGift(50, 'test_epic'));
+btnTestLegendary.addEventListener('click', () => submitTestGift(150, 'test_legendar'));
+testInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitTestComment('test_user'); });
+
+// ---------------- test: cadou dat inainte de a scrie judetul ----------------
+const btnPendingGift = document.getElementById('btnPendingGift');
+const btnResolvePending = document.getElementById('btnResolvePending');
+const pendingStatus = document.getElementById('pendingStatus');
+
+btnPendingGift.addEventListener('click', () => {
+  fetch('/api/manual-gift', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ value: 60, user: 'fara_judet', county: '', gift_name: 'Cadou surpriza' })
+  }).then(r => r.json()).then(d => {
+    pendingStatus.textContent = d.message || 'Cadou pus în așteptare pentru fara_judet.';
+  });
+});
+
+btnResolvePending.addEventListener('click', () => {
+  const val = testInput.value.trim();
+  if (!val) { testInput.focus(); pendingStatus.textContent = 'Scrie un cod de județ în câmpul de mai sus, apoi apasă din nou.'; return; }
+  fetch('/api/manual-comment', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: val, user: 'fara_judet' })
+  }).then(r => r.json()).then(d => {
+    if (!d.ok){
+      pendingStatus.textContent = 'Județ necunoscut.';
+    } else if (d.resolved_pending_gift){
+      pendingStatus.textContent = '✅ Cadoul în așteptare a fost aplicat acum, cu animație!';
+    } else {
+      pendingStatus.textContent = 'Comentariu trimis (nu era niciun cadou în așteptare pentru fara_judet).';
+    }
+  });
+});
 
 // ---------------- clasament live (tabele) ----------------
 function renderCountyBoard(counties){

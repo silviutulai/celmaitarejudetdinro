@@ -1,10 +1,12 @@
 // ====================================================================
 // Cel mai tare judet din Romania - pagina de afisaj (fara controale).
 // Se conecteaza prin WebSocket la server si redeseneaza harta, top 5
-// sustinatori si animatiile de cadou in timp real.
+// sustinatori si animatiile de comentariu/cadou in timp real.
+// Format 9:16 (letterbox automat, indiferent de dimensiunea ferestrei).
 // ====================================================================
 
 const BUCURESTI_ID = 'RO-B';
+const stageWrap = document.getElementById('stageWrap');
 const svg = document.getElementById('map-svg');
 const pathGroup = document.getElementById('path-group');
 const bucCircle = document.getElementById('bucCircle');
@@ -17,6 +19,23 @@ const viewersCount = document.getElementById('viewersCount');
 
 let counties = {};      // id -> {id, code, title, score}
 let rankBadges = {};    // id -> element (in afara de Bucuresti)
+
+// ---------------- pastreaza raportul 9:16, indiferent de fereastra ----------------
+function fitStage(){
+  const targetRatio = 9 / 16; // latime / inaltime
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let w, h;
+  if (vw / vh > targetRatio){
+    h = vh; w = h * targetRatio;
+  } else {
+    w = vw; h = w / targetRatio;
+  }
+  stageWrap.style.width = w + 'px';
+  stageWrap.style.height = h + 'px';
+  requestAnimationFrame(positionBadges);
+}
+window.addEventListener('resize', fitStage);
+fitStage();
 
 // ---------------- construieste harta o singura data ----------------
 ROMANIA_PATHS.forEach(c => {
@@ -56,7 +75,6 @@ function positionBadges(){
     badge.style.top = cy + 'px';
   });
 }
-window.addEventListener('resize', () => requestAnimationFrame(positionBadges));
 
 function maxScore(){ return Object.values(counties).reduce((m,c) => Math.max(m, c.score), 0); }
 function rankTierClass(idx){ return idx < 5 ? `tier-${idx+1}` : ''; }
@@ -100,27 +118,51 @@ function paintMap(){
 function initials(name){
   return (name || '?').replace(/[._]/g,' ').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase() || '?';
 }
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
 
 // ---------------- top 5 sustinatori (persoane, primite de la server) ----------------
 function renderSupporters(list){
   supportersBar.innerHTML = (list || []).slice(0, 5).map((s, idx) => `
     <div class="supporter-card r${idx+1}">
-      <div class="sc-num">${idx+1}</div>
-      <div class="sc-shield">
-        <span class="sc-crown">👑</span>
-        <span class="sc-initials">${initials(s.name)}</span>
+      <div class="sc-shield-wrap">
+        <div class="sc-num">${idx+1}</div>
+        <div class="sc-shield">
+          <span class="sc-crown">👑</span>
+          <span class="sc-initials">${initials(s.name)}</span>
+        </div>
       </div>
-      <div class="sc-info">
-        <div class="sc-name">${escapeHtml(s.name)}</div>
-        <div class="sc-pts">${s.points} pct</div>
-      </div>
+      <div class="sc-name">${escapeHtml(s.name)}</div>
+      <div class="sc-pts">${s.points} pct</div>
     </div>`).join('');
 }
 
-function escapeHtml(s){
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
+// ---------------- animatie mica la fiecare comentariu (numele langa judet) ----------------
+function popCommentName(countyId, name){
+  const el = document.getElementById(countyId);
+  const isBuc = countyId === BUCURESTI_ID;
+  let x, y;
+  if (isBuc){
+    const r = bucCircle.getBoundingClientRect();
+    x = r.left + r.width/2; y = r.top;
+  } else {
+    if (!el) return;
+    const svgRect = svg.getBoundingClientRect();
+    const vb = svg.viewBox.baseVal;
+    const bb = el.getBBox();
+    x = svgRect.left + (bb.x + bb.width/2 - vb.x) * (svgRect.width / vb.width);
+    y = svgRect.top + (bb.y - vb.y) * (svgRect.height / vb.height);
+  }
+  const pop = document.createElement('div');
+  pop.className = 'comment-pop';
+  pop.innerHTML = `<span class="cp-plus">+1</span> ${escapeHtml(name)}`;
+  pop.style.left = x + 'px';
+  pop.style.top = y + 'px';
+  document.body.appendChild(pop);
+  setTimeout(() => pop.remove(), 1550);
 }
 
 // ---------------- animatia de cadou (fighter card) ----------------
@@ -175,18 +217,24 @@ function connectWs(){
       return;
     }
 
-    if (data.event === 'hit' || data.event === 'gift' || data.event === 'mega_gift'){
-      const isGift = data.event !== 'hit';
+    if (data.event === 'hit'){
       const county = Object.values(counties).find(c => c.code === data.county);
       if (county) county.score = data.score;
       paintMap();
       if (data.top_supporters) renderSupporters(data.top_supporters);
-      if (isGift){
-        showGiftOverlay({
-          user: data.user, county: data.title, raw: data.value,
-          points: data.points, rarity: data.rarity || (data.event === 'mega_gift' ? 'legendary' : 'common'),
-        });
-      }
+      if (county) popCommentName(county.id, data.user);
+      return;
+    }
+
+    if (data.event === 'gift' || data.event === 'mega_gift'){
+      const county = Object.values(counties).find(c => c.code === data.county);
+      if (county) county.score = data.score;
+      paintMap();
+      if (data.top_supporters) renderSupporters(data.top_supporters);
+      showGiftOverlay({
+        user: data.user, county: data.title, raw: data.value,
+        points: data.points, rarity: data.rarity || (data.event === 'mega_gift' ? 'legendary' : 'common'),
+      });
       return;
     }
 
