@@ -4,12 +4,14 @@ Joc live pentru TikTok, format **9:16** (vertical, gata pentru filmat
 pe telefon sau pentru OBS), cu design de tip "loading screen" de
 battle royale (fundal navy, contur auriu, carduri de raritate).
 
-Fiecare comentariu cu numele/codul unui județ îi dă +1 punct — atât
-pentru județ, cât și pentru clasamentul personal al celui care a
+Fiecare comentariu cu numele/codul unui județ îi dă **+5 puncte** —
+atât pentru județ, cât și pentru clasamentul personal al celui care a
 scris — și apare o mică animație cu numele lui chiar lângă județ.
-Fiecare persoană poate puncta cu maxim **10 comentarii** (anti-spam);
-peste asta, comentariile ei tot ajută la atribuirea cadourilor, dar nu
-mai punctează.
+Anti-spam pe bază de timp: între două comentarii punctate ale
+**aceleiași persoane** trebuie să treacă minim **30 de secunde** —
+ceea ce înseamnă practic maxim 10 comentarii punctate la fiecare 5
+minute per persoană. Comentariile din pauză tot ajută la atribuirea
+cadourilor, doar nu mai punctează.
 
 Dacă persoana trimite și un **cadou**, punctele se dublează (×2), iar
 pe ecran apare o "fighter card" mare, cu numele ei, avatar cu inițiale,
@@ -84,8 +86,9 @@ că parola nu e configurată, în loc să lase pe oricine să intre.
 În `/admin` poți testa jocul fără să fii live, cu un buton pentru
 fiecare raritate de cadou:
 
-- **„+1 comentariu”** — simulează un comentariu normal (fără card, dar
-  cu mica animație cu numele lângă județ).
+- **„+1 comentariu”** — simulează un comentariu normal (dă 5 puncte,
+  fără card, dar cu mica animație cu numele lângă județ; în modul
+  test sare peste pauza de 30s, ca să poți apăsa liber).
 - **„Cadou comun”** — cadou mic, sub prag (5 → 10 puncte).
 - **„Cadou rar”** — (15 → 30 puncte).
 - **„Cadou epic”** — (50 → 100 puncte).
@@ -243,14 +246,18 @@ la **Environment → Environment Variables**.
 ## 5. Cum funcționează scorul
 
 - Cineva scrie în chat `CJ`, `Cluj`, `cluj` (fără diacritice merge la
-  fel) → județul Cluj primește **+1 punct**, persoana urcă un punct în
-  clasamentul personal de susținători, și apare o mică animație cu
-  numele ei chiar lângă județ (nu cardul mare — acela e doar la cadouri).
-- Fiecare persoană poate puncta cu **maxim 10 comentarii** (configurabil
-  din `MAX_COMMENTS_PER_USER`) — o măsură simplă anti-spam, ca cineva
-  să nu poată umfla artificial un județ scriind codul de sute de ori.
-  Comentariile de după al 10-lea tot actualizează "ultimul județ" al
-  persoanei (pentru atribuirea cadourilor), doar nu mai adaugă puncte.
+  fel) → județul Cluj primește **+5 puncte** (configurabil din
+  `COMMENT_POINTS`), persoana urcă 5 puncte în clasamentul personal de
+  susținători, și apare o mică animație cu numele ei chiar lângă județ
+  (nu cardul mare — acela e doar la cadouri).
+- Anti-spam **pe bază de timp**: între două comentarii punctate ale
+  **aceleiași persoane** trebuie să treacă minim
+  `COMMENT_COOLDOWN_SECONDS` (implicit **30 secunde**) — asta dă
+  automat un maxim de 10 comentarii punctate la fiecare 5 minute per
+  persoană, ca nimeni să nu poată umfla artificial un județ scriind
+  codul întruna. Comentariile din pauză tot actualizează "ultimul
+  județ" al persoanei (pentru atribuirea cadourilor), doar nu mai
+  adaugă puncte și nu mai declanșează animația.
 - Dacă acea persoană trimite și un **cadou**, se calculează valoarea
   lui în "diamante" TikTok, se dublează (**×2**) și se adaugă la
   ultimul județ pe care l-a scris în chat, plus la punctajul ei

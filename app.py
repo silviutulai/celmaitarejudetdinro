@@ -26,7 +26,7 @@ import auth
 from connection_manager import MANAGER
 from game_state import STATE
 from tiktok_bridge import BRIDGE
-from scoring import process_comment, process_gift, rarity_for, MAX_COMMENTS_PER_USER
+from scoring import process_comment, process_gift, rarity_for
 
 BASE_DIR = pathlib.Path(__file__).parent
 STATIC_DIR = BASE_DIR / "static"
@@ -173,12 +173,13 @@ async def reset_game(_: bool = Depends(require_admin)):
 @app.post("/api/manual-comment")
 async def manual_comment(payload: ManualCommentPayload, _: bool = Depends(require_admin)):
     """
-    Mod test: simuleaza un comentariu (respecta plafonul de
-    MAX_COMMENTS_PER_USER si rezolva orice cadou pus 'in asteptare'
-    pentru acest user de test).
+    Mod test: simuleaza un comentariu. Sare peste pauza de 30s dintre
+    comentarii (ignore_cooldown=True), ca sa poti testa animatiile
+    fara sa astepti intre apasari de buton. Rezolva si orice cadou
+    pus 'in asteptare' pentru acest user de test.
     """
     user_id = f"test:{payload.user.strip() or 'test_user'}"
-    result = process_comment(user_id, payload.user.strip() or "test_user", payload.text)
+    result = process_comment(user_id, payload.user.strip() or "test_user", payload.text, ignore_cooldown=True)
     if not result["hit"] and not result["gift"]:
         return JSONResponse({"ok": False, "message": "Județ necunoscut."}, status_code=404)
     if result["hit"]:

@@ -50,9 +50,9 @@ class GameState:
         # tine minte ultimul judet mentionat de fiecare utilizator,
         # ca sa stim pe cine bonusam cand trimite un cadou
         self.last_county_by_user: dict[str, str] = {}
-        # cate comentarii punctate a avut fiecare utilizator (plafon
-        # anti-spam - vezi scoring.py, MAX_COMMENTS_PER_USER)
-        self.comment_count_by_user: dict[str, int] = {}
+        # cand a fost ultimul comentariu PUNCTAT al fiecarui utilizator
+        # (anti-spam pe baza de timp - vezi scoring.py, COMMENT_COOLDOWN_SECONDS)
+        self.last_comment_time_by_user: dict[str, float] = {}
         # cadouri primite de la un utilizator care inca n-a scris
         # niciun judet - se aplica automat de indata ce scrie unul
         self.pending_gift_by_user: dict[str, dict] = {}
@@ -117,7 +117,7 @@ class GameState:
             c.score = 0
         self.supporters.clear()
         self.last_county_by_user.clear()
-        self.comment_count_by_user.clear()
+        self.last_comment_time_by_user.clear()
         self.pending_gift_by_user.clear()
         self.total_points = 0
         self.mark_dirty()

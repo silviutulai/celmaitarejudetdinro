@@ -119,7 +119,7 @@ function renderTopCounties(rankedCounties, rankIndexById){
 }
 
 // ---------------- animatie mica la fiecare comentariu (numele langa judet) ----------------
-function popCommentName(countyId, name){
+function popCommentName(countyId, name, points){
   const el = document.getElementById(countyId);
   if (!el) return;
   const svgRect = svg.getBoundingClientRect();
@@ -129,7 +129,7 @@ function popCommentName(countyId, name){
   const y = svgRect.top + (bb.y - vb.y) * (svgRect.height / vb.height);
   const pop = document.createElement('div');
   pop.className = 'comment-pop';
-  pop.innerHTML = `<span class="cp-plus">+1</span> ${escapeHtml(name)}`;
+  pop.innerHTML = `<span class="cp-plus">+${points}</span> ${escapeHtml(name)}`;
   pop.style.left = x + 'px';
   pop.style.top = y + 'px';
   document.body.appendChild(pop);
@@ -193,7 +193,7 @@ function connectWs(){
       if (county) county.score = data.score;
       paintMap();
       if (data.top_supporters) renderSupporters(data.top_supporters);
-      if (county) popCommentName(county.id, data.user);
+      if (county) popCommentName(county.id, data.user, data.points);
       return;
     }
 
