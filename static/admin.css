@@ -1,0 +1,72 @@
+html{ overflow-y:auto; height:auto; }
+html:has(.admin-body), .admin-body{
+  overflow-y:auto;
+  height:auto;
+  min-height:100vh;
+  background:var(--canvas);
+}
+
+/* ---------- login ---------- */
+.admin-login{
+  min-height:100vh;
+  display:flex; align-items:center; justify-content:center;
+  padding:24px;
+}
+.admin-login-card{
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:var(--radius-lg);
+  padding:36px 34px;
+  width:100%;
+  max-width:360px;
+  text-align:center;
+}
+.admin-login-card .flag-chip{ margin:0 auto 18px; }
+.admin-login-card h1{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:21px; font-weight:700; margin:0 0 8px;
+}
+.admin-login-card p{
+  font-size:13px; color:var(--muted); margin:0 0 20px; line-height:1.5;
+}
+.admin-login-card .text-input{ margin-bottom:12px; text-align:center; }
+.admin-error{
+  margin-top:12px;
+  font-size:12.5px; font-weight:700;
+  color:var(--flag-red);
+}
+
+/* ---------- admin panel ---------- */
+.admin-header{
+  background:var(--ink);
+  color:#fff;
+  padding:14px 26px;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:16px;
+}
+.admin-header .brand p{ color:#A7ABBB; }
+.admin-header .btn-ghost{
+  border-color:rgba(255,255,255,0.18);
+  color:#D8DAE6;
+  text-decoration:none;
+  display:inline-flex; align-items:center;
+  width:auto;
+}
+.admin-header .btn-ghost:hover{ border-color:#fff; color:#fff; }
+
+.admin-grid{
+  max-width:920px;
+  margin:0 auto;
+  padding:22px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+  gap:18px;
+  align-items:start;
+}
+.admin-hint{
+  font-size:12.5px; color:var(--muted); margin:0 0 12px; line-height:1.5;
+}
+
+@media (max-width: 640px){
+  .admin-header{ flex-direction:column; align-items:flex-start; gap:12px; }
+}

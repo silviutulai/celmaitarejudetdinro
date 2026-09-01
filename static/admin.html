@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin · Cel mai tare județ din România</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/admin.css">
+</head>
+<body class="admin-body">
+
+<!-- ===================== LOGIN ===================== -->
+<div class="admin-login" id="loginScreen">
+  <div class="admin-login-card">
+    <div class="flag-chip"><i></i><i></i><i></i></div>
+    <h1>Panou de control</h1>
+    <p>Introdu parola de admin ca să poți conecta live-ul, testa jocul sau reseta clasamentul.</p>
+    <input class="text-input" id="passwordInput" type="password" placeholder="Parolă">
+    <button class="btn btn-primary" id="btnLogin">Intră</button>
+    <div class="admin-error" id="loginError" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- ===================== PANOU ADMIN ===================== -->
+<div class="admin-panel" id="adminPanel" style="display:none;">
+  <header class="admin-header">
+    <div class="brand">
+      <div class="flag-chip"><i></i><i></i><i></i></div>
+      <div>
+        <h1 style="font-size:18px;">Panou de control</h1>
+        <p style="margin:2px 0 0; font-size:12px; color:var(--muted);">Cel mai tare județ din România</p>
+      </div>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <a class="btn btn-ghost" href="/" target="_blank" rel="noopener">↗ Deschide afișajul</a>
+      <button class="btn btn-ghost" id="btnLogout">Ieși din cont</button>
+    </div>
+  </header>
+
+  <div class="admin-grid">
+    <div class="panel">
+      <div class="panel-title">📡 Conectare TikTok</div>
+      <div class="conn-status" id="connStatus">
+        <span class="dot"></span>
+        <span id="connStatusText">Neconectat</span>
+      </div>
+      <label class="field-label" for="usernameInput">Username TikTok (fără @)</label>
+      <input class="text-input" id="usernameInput" type="text" placeholder="ex: numele.tau">
+      <button class="btn btn-primary" id="btnConnect">Conectează-te la live</button>
+      <button class="btn btn-danger" id="btnDisconnect" style="display:none;">Deconectează</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">🧪 Mod test (fără live)</div>
+      <p class="admin-hint">Simulează comentarii și cadouri ca să vezi cum arată jocul înainte de a fi live.</p>
+      <input class="text-input" id="testInput" type="text" placeholder="ex: CJ, Cluj, AB…">
+      <div class="row-btns" style="margin-top:9px;">
+        <button class="btn btn-ghost" id="btnTestComment">+1 comentariu</button>
+        <button class="btn btn-ghost" id="btnTestGift">🎁 cadou ×2</button>
+      </div>
+      <button class="btn btn-ghost" id="btnTestMega" style="margin-top:8px;">🔥 simulează cadou MEGA (100+)</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">⚠️ Zonă periculoasă</div>
+      <p class="admin-hint">Resetează scorurile tuturor județelor la zero. Nu poate fi anulat.</p>
+      <button class="btn btn-danger" id="btnReset">Resetează clasamentul</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/admin.js"></script>
+</body>
+</html>
