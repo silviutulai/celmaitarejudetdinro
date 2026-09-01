@@ -1,7 +1,7 @@
 // ====================================================================
 // Cel mai tare judet din Romania - pagina de afisaj (fara controale).
-// Se conecteaza prin WebSocket la server si redeseneaza harta, top 5
-// sustinatori si animatiile de comentariu/cadou in timp real.
+// Se conecteaza prin WebSocket la server si redeseneaza harta, top 3
+// sustinatori, top 3 judete si animatiile de comentariu/cadou live.
 // Format 9:16 (letterbox automat, indiferent de dimensiunea ferestrei).
 // ====================================================================
 
@@ -11,6 +11,7 @@ const svg = document.getElementById('map-svg');
 const pathGroup = document.getElementById('path-group');
 const bucCircle = document.getElementById('bucCircle');
 const supportersBar = document.getElementById('supportersBar');
+const countiesBar = document.getElementById('countiesBar');
 const giftLayer = document.getElementById('giftLayer');
 
 const statusPill = document.getElementById('statusPill');
@@ -18,7 +19,6 @@ const statusLabel = document.getElementById('statusLabel');
 const viewersCount = document.getElementById('viewersCount');
 
 let counties = {};      // id -> {id, code, title, score}
-let rankBadges = {};    // id -> element (in afara de Bucuresti)
 
 // ---------------- pastreaza raportul 9:16, indiferent de fereastra ----------------
 function fitStage(){
@@ -32,7 +32,6 @@ function fitStage(){
   }
   stageWrap.style.width = w + 'px';
   stageWrap.style.height = h + 'px';
-  requestAnimationFrame(positionBadges);
 }
 window.addEventListener('resize', fitStage);
 fitStage();
@@ -47,39 +46,10 @@ ROMANIA_PATHS.forEach(c => {
   counties[c.id] = { id: c.id, code: c.code, title: c.title, score: 0 };
 });
 
-function ensureRankBadges(){
-  ROMANIA_PATHS.forEach(c => {
-    if (c.id === BUCURESTI_ID) return;
-    if (rankBadges[c.id]) return;
-    const el = document.createElement('div');
-    el.className = 'rank-badge';
-    document.body.appendChild(el);
-    rankBadges[c.id] = el;
-  });
-}
-
-function positionBadges(){
-  const svgRect = svg.getBoundingClientRect();
-  const vb = svg.viewBox.baseVal;
-  const scaleX = svgRect.width / vb.width;
-  const scaleY = svgRect.height / vb.height;
-  ROMANIA_PATHS.forEach(c => {
-    if (c.id === BUCURESTI_ID) return;
-    const pathEl = document.getElementById(c.id);
-    const badge = rankBadges[c.id];
-    if (!pathEl || !badge) return;
-    const bb = pathEl.getBBox();
-    const cx = svgRect.left + (bb.x + bb.width/2 - vb.x) * scaleX;
-    const cy = svgRect.top + (bb.y + bb.height/2 - vb.y) * scaleY;
-    badge.style.left = cx + 'px';
-    badge.style.top = cy + 'px';
-  });
-}
-
 function maxScore(){ return Object.values(counties).reduce((m,c) => Math.max(m, c.score), 0); }
 function rankTierClass(idx){ return idx < 5 ? `tier-${idx+1}` : ''; }
 
-// ---------------- desenarea hartii: doar top 5 judete au culoare, restul gri ----------------
+// ---------------- desenarea hartii: doar top 5 judete au culoare, restul gri (fara etichete) ----------------
 function paintMap(){
   const mx = maxScore();
   const ranked = Object.values(counties).sort((a,b) => b.score - a.score);
@@ -95,15 +65,6 @@ function paintMap(){
     if (inTop5){ el.classList.add('top5'); el.classList.add(rankTierClass(idx)); }
   });
 
-  ensureRankBadges();
-  ranked.forEach((c, idx) => {
-    const badge = rankBadges[c.id];
-    if (!badge) return;
-    const inTop5 = mx > 0 && idx < 5;
-    badge.className = 'rank-badge' + (inTop5 ? ` ${rankTierClass(idx)}` : '');
-    badge.innerHTML = `<span class="cd">${c.code}</span><span class="rk">#${idx+1}</span>`;
-  });
-
   const bucScore = counties[BUCURESTI_ID]?.score || 0;
   const bucIdx = rankIndexById[BUCURESTI_ID];
   const bucInTop5 = mx > 0 && bucIdx < 5;
@@ -112,7 +73,7 @@ function paintMap(){
   bucCircle.querySelector('.buc-score').textContent = bucScore;
   bucCircle.querySelector('.buc-rank').textContent = `#${bucIdx + 1}`;
 
-  requestAnimationFrame(positionBadges);
+  renderTopCounties(ranked);
 }
 
 function initials(name){
@@ -124,9 +85,9 @@ function escapeHtml(s){
   return d.innerHTML;
 }
 
-// ---------------- top 5 sustinatori (persoane, primite de la server) ----------------
+// ---------------- top 3 sustinatori (persoane, primite de la server) ----------------
 function renderSupporters(list){
-  supportersBar.innerHTML = (list || []).slice(0, 5).map((s, idx) => `
+  supportersBar.innerHTML = (list || []).slice(0, 3).map((s, idx) => `
     <div class="supporter-card r${idx+1}">
       <div class="sc-shield-wrap">
         <div class="sc-num">${idx+1}</div>
@@ -137,6 +98,17 @@ function renderSupporters(list){
       </div>
       <div class="sc-name">${escapeHtml(s.name)}</div>
       <div class="sc-pts">${s.points} pct</div>
+    </div>`).join('');
+}
+
+// ---------------- top 3 judete (sub top 3 jucatori) ----------------
+function renderTopCounties(rankedCounties){
+  const top = (rankedCounties || []).filter(c => c.score > 0).slice(0, 3);
+  countiesBar.innerHTML = top.map((c, idx) => `
+    <div class="county-mini r${idx+1}">
+      <span class="cm-rank">${idx+1}</span>
+      <span class="cm-name">${escapeHtml(c.title)}</span>
+      <span class="cm-pts">${c.score} pct</span>
     </div>`).join('');
 }
 

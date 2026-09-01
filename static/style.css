@@ -17,7 +17,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;
   margin:0 auto;
   background:radial-gradient(ellipse at 50% -10%, #16233F 0%, #0A0E1A 55%, #060810 100%);
   overflow:hidden;
-  container-type: inline-size;
+  container-type: size;
 }
 .stage{display:flex;flex-direction:column;align-items:center;width:100%;height:100%;padding:16px 20px 12px;box-sizing:border-box;}
 .titlebar{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;position:relative;width:100%;max-width:100%;flex-shrink:0;}
@@ -97,7 +97,42 @@ html,body{margin:0;padding:0;width:100%;height:100%;
 .supporter-card.r2 .sc-pts{ color:#C9CEDB; }
 .supporter-card.r3 .sc-pts{ color:#E08A4D; }
 
+/* ---- top 3 judete, sub top 3 jucatori ---- */
+.counties-bar{
+  display:flex; gap:6px; justify-content:center; flex-wrap:nowrap;
+  margin:0 0 10px; width:100%; flex-shrink:0;
+  min-height:26px;
+}
+.county-mini{
+  display:flex; align-items:center; gap:6px;
+  background:linear-gradient(180deg,#151C2E,#0E1420);
+  border:1px solid #2A3244; border-radius:20px;
+  padding:5px 12px;
+  flex:1 1 0; min-width:0; max-width:150px;
+  justify-content:center;
+}
+.cm-rank{
+  font-family:'Bebas Neue',sans-serif; font-size:13px; color:#4A5266;
+  width:14px; text-align:center; flex-shrink:0;
+}
+.county-mini.r1 .cm-rank{ color:var(--legendary); }
+.county-mini.r2 .cm-rank{ color:#C9CEDB; }
+.county-mini.r3 .cm-rank{ color:#E08A4D; }
+.county-mini.r1{ border-color:var(--legendary); box-shadow:0 0 10px rgba(255,201,60,0.3); }
+.county-mini.r2{ border-color:#C9CEDB; }
+.county-mini.r3{ border-color:#E08A4D; }
+.cm-name{
+  font-family:'Inter',sans-serif; font-weight:700; font-size:11px; color:#F0F1F5;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.cm-pts{
+  font-family:'Teko',sans-serif; font-weight:600; font-size:12px; color:#7C8394;
+  flex-shrink:0;
+}
+.county-mini.r1 .cm-pts{ color:var(--legendary); }
+
 .map-wrap{position:relative;flex:1 1 auto;min-height:0;width:100%;max-width:1000px;display:flex;align-items:center;justify-content:center;
+  margin-bottom:8px;
   background:#111116;
   clip-path:polygon(2% 0,100% 0,100% 96%,98% 100%,0 100%,0 4%);
   border:1px solid #2A2A33;}
@@ -109,17 +144,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;
 .jud.tier-3{fill:#E8752E;stroke:#E08A4D;filter:drop-shadow(0 0 10px #E08A4D);}
 .jud.tier-4{fill:#35C7F0;stroke:var(--rare);filter:drop-shadow(0 0 10px var(--rare));}
 .jud.tier-5{fill:#9B4FE0;stroke:var(--epic);filter:drop-shadow(0 0 10px var(--epic));}
-.rank-badge{position:absolute;transform:translate(-50%,-50%);pointer-events:none;
-  font-family:'Teko',sans-serif;font-weight:700;font-size:16px;color:#111116;
-  background:#F2F3F6;padding:2px 8px;border-radius:7px;
-  box-shadow:0 1.5px 4px rgba(0,0,0,0.4);
-  display:flex;flex-direction:column;align-items:center;line-height:1.02;white-space:nowrap;}
-.rank-badge .rk{font-size:12px;color:#3A3E4A;font-weight:600;}
-.rank-badge.tier-1{background:#FFF3D0;box-shadow:0 0 0 2px var(--legendary), 0 2px 6px rgba(0,0,0,.35);font-size:18px;}
-.rank-badge.tier-2{background:#EAEDF2;box-shadow:0 0 0 2px #C9CEDB, 0 2px 6px rgba(0,0,0,.35);}
-.rank-badge.tier-3{background:#FBE3D0;box-shadow:0 0 0 2px #E08A4D, 0 2px 6px rgba(0,0,0,.35);}
-.rank-badge.tier-4{background:#DCF3FC;box-shadow:0 0 0 2px var(--rare), 0 2px 6px rgba(0,0,0,.35);}
-.rank-badge.tier-5{background:#F1E3FC;box-shadow:0 0 0 2px var(--epic), 0 2px 6px rgba(0,0,0,.35);}
 .buc-circle{position:absolute;right:5%;bottom:6%;width:94px;height:94px;border-radius:50%;
   background:var(--zero-fill);display:flex;flex-direction:column;align-items:center;justify-content:center;
   border:2px solid #2A2A33;box-shadow:0 0 0 4px #0A0E1A, 0 10px 24px rgba(0,0,0,0.6);
@@ -134,12 +158,15 @@ html,body{margin:0;padding:0;width:100%;height:100%;
 .buc-circle .buc-name{font-size:9px;color:#33333B;font-weight:600;}
 .buc-circle .buc-score{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;color:#111116;}
 .cta-bar{
-  margin-top:8px;font-family:'Teko',sans-serif;font-weight:600;font-size:15px;letter-spacing:1.3px;
-  padding:5px 26px;flex-shrink:0;
+  margin-top:8px;font-family:'Teko',sans-serif;font-weight:600;font-size:clamp(11px,3.6cqw,15px);letter-spacing:1.1px;
+  padding:5px 20px;flex-shrink:0;max-width:92%;text-align:center;
   background:linear-gradient(90deg,transparent,#FFC93C33,transparent);
   border-top:1px solid #FFC93C;border-bottom:1px solid #FFC93C;
   color:#FFC93C;text-transform:uppercase;
 }
+/* zona libera de jos - aici TikTok isi suprapune comentariile live,
+   nu punem nimic important in ea */
+.bottom-safe{ flex-shrink:0; width:100%; height:13cqh; }
 .gift-layer{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;z-index:80;overflow:hidden;}
 
 .status-pill{
