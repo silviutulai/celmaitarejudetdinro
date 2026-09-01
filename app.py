@@ -7,10 +7,10 @@ Ruleaza local:
 Pe Render, foloseste Procfile-ul din acest repo.
 
 Pagini:
-  /        - afisajul jocului (harta + clasament), curat, fara butoane -
-             asta e pagina pe care o filmezi.
-  /admin   - panou de control (conectare TikTok, mod test, reset),
-             protejat cu parola din variabila de mediu ADMIN_PASSWORD.
+  /        - afisajul jocului (harta + top 5 sustinatori), curat, fara
+             butoane - asta e pagina pe care o filmezi.
+  /admin   - panou de control + clasament complet, protejat cu parola
+             din variabila de mediu ADMIN_PASSWORD.
 """
 import asyncio
 import contextlib
@@ -26,7 +26,7 @@ import auth
 from counties import find_county
 from connection_manager import MANAGER
 from game_state import STATE
-from tiktok_bridge import BRIDGE, MEGA_GIFT_THRESHOLD
+from tiktok_bridge import BRIDGE, MEGA_GIFT_THRESHOLD, RARE_THRESHOLD, EPIC_THRESHOLD, rarity_for
 
 BASE_DIR = pathlib.Path(__file__).parent
 STATIC_DIR = BASE_DIR / "static"
@@ -73,7 +73,8 @@ class ConnectPayload(BaseModel):
 class ManualHitPayload(BaseModel):
     text: str
     gift: bool = False
-    value: int = 0  # valoare simulata in "diamante", doar pentru Mod test
+    value: int = 0        # valoare simulata in "diamante", doar pentru cadouri (Mod test)
+    user: str = "test_user"
 
 
 class LoginPayload(BaseModel):
@@ -127,7 +128,16 @@ async def admin_logout(response: Response, admin_session: Optional[str] = Cookie
 
 @app.get("/api/state")
 async def get_state():
-    return JSONResponse(STATE.snapshot())
+    data = STATE.snapshot()
+    # pentru admin, dam si clasamentul complet de judete + mai multi sustinatori
+    data["counties_ranked"] = [
+        {"id": c.id, "code": c.code, "title": c.title, "score": c.score}
+        for c in STATE.leaderboard(42)
+    ]
+    data["top_supporters"] = [
+        {"name": s.name, "points": s.points} for s in STATE.top_supporters(20)
+    ]
+    return JSONResponse(data)
 
 
 # ==================== CONTROL JOC (protejat) ====================
@@ -159,33 +169,42 @@ async def reset_game(_: bool = Depends(require_admin)):
 async def manual_hit(payload: ManualHitPayload, _: bool = Depends(require_admin)):
     """
     Endpoint pentru 'Mod test' (din /admin): simuleaza un comentariu
-    sau un cadou, inclusiv animatia mega la cadouri mari.
+    sau un cadou de o anumita raritate, ca sa vezi animatiile inainte
+    de a fi live.
     """
     county = find_county(payload.text)
     if not county:
         return JSONResponse({"ok": False, "message": "Judet necunoscut."}, status_code=404)
 
+    user_label = payload.user.strip() or "test_user"
+
     if payload.gift:
         gift_value = max(payload.value, 1)
         points = gift_value * 2
+        rarity = rarity_for(gift_value)
     else:
         gift_value = 0
         points = 1
+        rarity = None
 
     c = STATE.add_point(county["id"], points)
-    is_mega = payload.gift and gift_value > MEGA_GIFT_THRESHOLD
+    STATE.add_supporter_points(f"test:{user_label}", user_label, points)
 
     event = {
-        "event": "mega_gift" if is_mega else ("gift" if payload.gift else "hit"),
+        "event": "mega_gift" if rarity == "legendary" else ("gift" if payload.gift else "hit"),
         "county": c.code,
         "title": c.title,
         "score": c.score,
         "points": points,
         "value": gift_value,
         "gift": payload.gift,
-        "user": "test_user",
+        "user": user_label,
+        "top_supporters": [
+            {"name": s.name, "points": s.points} for s in STATE.top_supporters(5)
+        ],
     }
     if payload.gift:
+        event["rarity"] = rarity
         event["gift_name"] = "Cadou de test"
     await MANAGER.broadcast(event)
     return {"ok": True}

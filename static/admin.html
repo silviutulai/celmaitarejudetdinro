@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin · Cel mai tare județ din România</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Teko:wght@500;600;700&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/style.css">
 <link rel="stylesheet" href="/static/admin.css">
 </head>
@@ -14,9 +14,9 @@
 <!-- ===================== LOGIN ===================== -->
 <div class="admin-login" id="loginScreen">
   <div class="admin-login-card">
-    <div class="flag-chip"><i></i><i></i><i></i></div>
-    <h1>Panou de control</h1>
-    <p>Introdu parola de admin ca să poți conecta live-ul, testa jocul sau reseta clasamentul.</p>
+    <div class="crown">👑</div>
+    <h1>PANOU DE CONTROL</h1>
+    <p>Introdu parola de admin ca să poți conecta live-ul, testa jocul sau vedea clasamentul complet.</p>
     <input class="text-input" id="passwordInput" type="password" placeholder="Parolă">
     <button class="btn btn-primary" id="btnLogin">Intră</button>
     <div class="admin-error" id="loginError" style="display:none;"></div>
@@ -24,20 +24,24 @@
 </div>
 
 <!-- ===================== PANOU ADMIN ===================== -->
-<div class="admin-panel" id="adminPanel" style="display:none;">
+<div class="admin-wrap" id="adminPanel" style="display:none;">
   <header class="admin-header">
-    <div class="brand">
-      <div class="flag-chip"><i></i><i></i><i></i></div>
-      <div>
-        <h1 style="font-size:18px;">Panou de control</h1>
-        <p style="margin:2px 0 0; font-size:12px; color:var(--muted);">Cel mai tare județ din România</p>
-      </div>
+    <div>
+      <h1>PANOU DE CONTROL</h1>
+      <p>Cel mai tare județ din România</p>
     </div>
-    <div style="display:flex; gap:10px;">
+    <div class="admin-header-actions">
       <a class="btn btn-ghost" href="/" target="_blank" rel="noopener">↗ Deschide afișajul</a>
       <button class="btn btn-ghost" id="btnLogout">Ieși din cont</button>
     </div>
   </header>
+
+  <div class="stat-row" id="statRow">
+    <div class="stat-chip"><div class="num" id="statTotal">0</div><div class="lbl">Puncte totale</div></div>
+    <div class="stat-chip"><div class="num" id="statActive">0 / 42</div><div class="lbl">Județe active</div></div>
+    <div class="stat-chip"><div class="num" id="statSupporters">0</div><div class="lbl">Susținători</div></div>
+    <div class="stat-chip"><div class="num" id="statViewers">0</div><div class="lbl">Viewers acum</div></div>
+  </div>
 
   <div class="admin-grid">
     <div class="panel">
@@ -54,19 +58,43 @@
 
     <div class="panel">
       <div class="panel-title">🧪 Mod test (fără live)</div>
-      <p class="admin-hint">Simulează comentarii și cadouri ca să vezi cum arată jocul înainte de a fi live.</p>
-      <input class="text-input" id="testInput" type="text" placeholder="ex: CJ, Cluj, AB…">
-      <div class="row-btns" style="margin-top:9px;">
-        <button class="btn btn-ghost" id="btnTestComment">+1 comentariu</button>
-        <button class="btn btn-ghost" id="btnTestGift">🎁 cadou ×2</button>
+      <p class="admin-hint">Simulează un comentariu sau cadouri de fiecare raritate.</p>
+      <input class="text-input" id="testInput" type="text" placeholder="ex: CJ, Cluj, AB…" style="margin-bottom:9px;">
+      <div class="row-btns">
+        <button class="btn btn-rarity" id="btnTestComment">+1 comentariu</button>
+        <button class="btn btn-rarity" id="btnTestCommon">Cadou comun</button>
       </div>
-      <button class="btn btn-ghost" id="btnTestMega" style="margin-top:8px;">🔥 simulează cadou MEGA (100+)</button>
+      <div class="row-btns" style="margin-top:8px;">
+        <button class="btn btn-rarity rare" id="btnTestRare">Cadou rar</button>
+        <button class="btn btn-rarity epic" id="btnTestEpic">Cadou epic</button>
+      </div>
+      <button class="btn btn-rarity legendary" id="btnTestLegendary" style="margin-top:8px;">🔥 Cadou LEGENDAR (98+)</button>
     </div>
 
     <div class="panel">
       <div class="panel-title">⚠️ Zonă periculoasă</div>
-      <p class="admin-hint">Resetează scorurile tuturor județelor la zero. Nu poate fi anulat.</p>
-      <button class="btn btn-danger" id="btnReset">Resetează clasamentul</button>
+      <p class="admin-hint">Resetează scorurile tuturor județelor și clasamentul susținătorilor. Nu poate fi anulat.</p>
+      <button class="btn btn-danger" id="btnReset">Resetează tot</button>
+    </div>
+
+    <div class="panel board-panel">
+      <div class="panel-title">🏆 Clasament complet (live)</div>
+      <div class="board-cols">
+        <div>
+          <table class="board-table">
+            <thead><tr><th>#</th><th>Județ</th><th style="text-align:right;">Puncte</th></tr></thead>
+            <tbody id="countyBoardBody"></tbody>
+          </table>
+          <div class="board-empty" id="countyBoardEmpty">Niciun punct încă.</div>
+        </div>
+        <div>
+          <table class="board-table">
+            <thead><tr><th>#</th><th>Susținător</th><th style="text-align:right;">Puncte</th></tr></thead>
+            <tbody id="supporterBoardBody"></tbody>
+          </table>
+          <div class="board-empty" id="supporterBoardEmpty">Niciun susținător încă.</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

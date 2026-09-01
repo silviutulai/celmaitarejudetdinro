@@ -1,15 +1,23 @@
 # Cel mai tare județ din România 🏆
 
-Joc live pentru TikTok: fiecare comentariu cu numele/codul unui județ
-îi dă +1 punct, iar dacă persoana respectivă trimite și un cadou,
-punctele pentru județul ei se dublează (×2). Top 5 județe apar
-evidențiate special pe hartă și în clasament (contur + culoare de
-rang), fiecare județ are prescurtarea afișată direct pe hartă, iar
-București are propriul cerc separat (pe harta reală e prea mic ca să
-se citească ceva pe el). Când vine un cadou cu valoare peste 99
-(prag configurabil), pornește o animație "mega" separată, cu numele
-celui care a dat cadoul și județul lui. Totul e gândit să fie filmat
-cu telefonul: fundal alb, scris mare și clar.
+Joc live pentru TikTok, cu design de tip "loading screen" de battle
+royale (fundal navy, contur auriu, carduri de raritate). Fiecare
+comentariu cu numele/codul unui județ îi dă +1 punct — atât pentru
+județ, cât și pentru clasamentul personal al celui care a scris. Dacă
+persoana trimite și un cadou, punctele se dublează (×2), iar pe ecran
+apare o "fighter card" cu numele ei, avatar cu inițiale, județul
+susținut și punctele câștigate — cu stil vizual diferit după raritatea
+cadoului: **comun → rar → epic → legendar** (cadourile mari, peste
+prag, declanșează animația legendară, cu raze de lumină și ecran
+întunecat dramatic).
+
+Pe hartă doar **top 5 județe** au culoare (auriu/argintiu/bronz/cyan/
+mov), restul rămân gri-uniform cu numărul de loc afișat clar, cu
+cifre mari și negre. Deasupra hărții apare mereu un panou cu **top 5
+susținători** (persoanele cu cele mai multe puncte acumulate), cu
+insignă de scut și coroană pentru primul loc. Clasamentul **complet**
+(toate cele 42 de județe + toți susținătorii) e vizibil doar în
+`/admin`, ca pagina de afișaj să rămână curată pentru filmat.
 
 Se conectează direct la contul tău de TikTok când dai live, folosind
 [TikTokLive](https://github.com/isaackogan/TikTokLive) — o librărie
@@ -47,9 +55,9 @@ uvicorn app:app --reload
 Deschide apoi `http://localhost:8000` în browser — asta e **pagina de
 afișaj**, curată, fără butoane, gata de filmat.
 
-Controalele (conectare TikTok, mod test, reset) sunt separat, la
-`http://localhost:8000/admin`, protejate cu o parolă. Local, setează
-parola înainte să pornești serverul:
+Controalele (conectare TikTok, mod test, reset, clasament complet)
+sunt separat, la `http://localhost:8000/admin`, protejate cu o
+parolă. Local, setează parola înainte să pornești serverul:
 
 ```bash
 # Linux / Mac
@@ -64,12 +72,15 @@ uvicorn app:app --reload
 Fără `ADMIN_PASSWORD` setat, pagina `/admin` afișează un mesaj clar
 că parola nu e configurată, în loc să lase pe oricine să intre.
 
-În `/admin` poți testa jocul fără să fii live:
+În `/admin` poți testa jocul fără să fii live, cu un buton pentru
+fiecare raritate de cadou:
 
-- **„+1 comentariu”** — simulează un comentariu normal.
-- **„🎁 cadou ×2”** — simulează un cadou mic (10 puncte brute → 20 cu ×2).
-- **„🔥 simulează cadou MEGA (100+)”** — simulează un cadou mare
-  (150 puncte brute → peste prag → declanșează animația mega).
+- **„+1 comentariu”** — simulează un comentariu normal (fără card).
+- **„Cadou comun”** — cadou mic, sub prag (5 → 10 puncte).
+- **„Cadou rar”** — (15 → 30 puncte).
+- **„Cadou epic”** — (50 → 100 puncte).
+- **„🔥 Cadou LEGENDAR (98+)”** — declanșează animația mare, cu raze
+  de lumină și ecran întunecat.
 
 Când ești gata să te conectezi la propriul live TikTok, din `/admin`
 scrie username-ul tău (fără @) și apasă **„Conectează-te la live”**.
@@ -81,22 +92,25 @@ nu trebuie s-o dai refresh.
 
 ## 2. Pune codul pe GitHub
 
-Dacă nu ai încă un repo, din folderul proiectului:
+Din folderul proiectului (păstrează fișierele la rădăcina repo-ului,
+nu într-un subfolder — vezi nota de mai jos dacă ai probleme cu asta):
 
 ```bash
 git init
 git add .
-git commit -m "Primul commit - cel mai tare judet din Romania"
-```
-
-Creează un repo nou și gol pe [github.com/new](https://github.com/new)
-(fără README, fără .gitignore — le ai deja), apoi:
-
-```bash
-git remote add origin https://github.com/<user-ul-tau>/cel-mai-tare-judet.git
+git commit -m "Design nou: fighter cards, susținători, panou admin"
 git branch -M main
-git push -u origin main
+git remote add origin https://github.com/<user-ul-tau>/<repo-ul-tau>.git
+git push -u origin main --force
 ```
+
+Dacă repo-ul există deja și vrei doar să actualizezi fișierele (fără
+`git` instalat), cea mai simplă variantă e prin browser: deschide
+folderul dezarhivat pe calculator, selectează tot conținutul din
+interior (Ctrl+A / Cmd+A — inclusiv folderul `static`, ca folder
+întreg, nu fișierele lui individual) și trage totul peste zona de
+upload de pe GitHub (**Add file → Upload files**). Browserul păstrează
+structura de subfoldere dacă tragi folderul `static` ca atare.
 
 ---
 
@@ -105,7 +119,7 @@ git push -u origin main
 **Varianta rapidă (cu `render.yaml`, inclus în proiect):**
 
 1. Mergi pe [dashboard.render.com](https://dashboard.render.com) → **New** → **Blueprint**.
-2. Conectează contul tău de GitHub și alege repo-ul `cel-mai-tare-judet`.
+2. Conectează contul tău de GitHub și alege repo-ul.
 3. Render citește automat `render.yaml` (plan `starter` + disc persistent, vezi mai jos).
 4. Apasă **Apply** — build-ul pornește automat.
 
@@ -119,11 +133,11 @@ git push -u origin main
 
 După deploy, Render îți dă un URL de tipul
 `https://cel-mai-tare-judet.onrender.com` — acela e link-ul pe care îl
-deschizi pe ecranul pe care îl filmezi.
+deschizi pe ecranul pe care îl filmezi, iar `/admin` pentru control.
 
 ---
 
-### ⚠️ Ce trebuie să cumperi pe Render ca să nu ți se reseteze jocul în timpul live-ului
+### ⚠️ Ce trebuie să schimbi/cumperi pe Render ca să nu ți se reseteze jocul în timpul live-ului
 
 Sunt **două riscuri diferite**, și trebuie rezolvate pe rând:
 
@@ -136,11 +150,11 @@ la TikTok se rupe. **Soluție: treci pe planul „Starter" (în jur de
 Instance Type**. Serviciile plătite nu mai adorm din inactivitate.
 
 **2. Chiar și pe Starter, un restart normal șterge scorul din memorie.**
-Scorurile sunt ținute în memoria procesului. Dacă Render repornește
-serviciul din orice motiv (crash, mentenanță, redeploy), memoria se
-golește. Ca să nu pierzi scorul, aplicația salvează automat pe disc la
-fiecare câteva secunde — dar are nevoie de **un disc persistent**, care
-există doar pe planuri plătite:
+Scorurile (și clasamentul susținătorilor) sunt ținute în memoria
+procesului. Dacă Render repornește serviciul din orice motiv (crash,
+mentenanță, redeploy), memoria se golește. Ca să nu pierzi progresul,
+aplicația salvează automat pe disc la fiecare câteva secunde — dar are
+nevoie de **un disc persistent**, care există doar pe planuri plătite:
 
 - Dashboard → serviciul tău → **Disks** → **Add Disk**
 - Mount path: `/var/data`, dimensiune: 1 GB e mai mult decât suficient.
@@ -148,9 +162,9 @@ există doar pe planuri plătite:
   (deja inclusă în `render.yaml`, dacă folosești Blueprint-ul).
 
 Cu discul atașat, chiar dacă serviciul repornește la mijlocul unui
-live, la following request scorurile sunt reîncărcate exact de unde
-au rămas (doar starea conexiunii TikTok trebuie refăcută manual,
-apăsând din nou „Conectează-te la live").
+live, la următorul request scorurile și susținătorii sunt reîncărcați
+exact de unde au rămas (doar starea conexiunii TikTok trebuie refăcută
+manual, apăsând din nou „Conectează-te la live" din `/admin`).
 
 **3. Nu redeploya în timpul live-ului.**
 Orice push nou pe GitHub (dacă ai activat auto-deploy) repornește
@@ -158,8 +172,9 @@ serviciul. Fă update-urile de cod **înainte sau după** live, niciodată
 în timpul lui.
 
 **Rezumat ce să cumperi:** planul **Starter** (obligatoriu, ~7$/lună)
-+ un **Disk** de 1 GB atașat lui (câțiva cenți/lună) = combinația care
-te protejează de ambele riscuri.
++ un **Disk** de 1 GB atașat lui (câțiva cenți/lună). Costul total e
+proporțional cu zilele cât rulează serviciul (Render calculează pe
+secundă), facturat automat pe card, la începutul lunii următoare.
 
 ### Setează parola de admin pe Render
 
@@ -177,50 +192,67 @@ Salvează — Render repornește automat serviciul cu noua variabilă.
 Apoi accesează `https://<url-ul-tau-render>.onrender.com/admin` și
 loghează-te cu parola respectivă.
 
+### Alte variabile utile (opționale)
+
+```
+MEGA_GIFT_THRESHOLD=99     # peste cate diamante devine cadou "legendar"
+RARE_THRESHOLD=10          # de la cate diamante devine "rar"
+EPIC_THRESHOLD=30          # de la cate diamante devine "epic"
+EULERSTREAM_API_KEY=...    # cheie optionala pentru limite mai mari TikTokLive
+```
+
 ### Cheie opțională Euler Stream (limite mai mari)
 
 TikTokLive folosește un server de semnare gratuit (Euler Stream) cu
 limite comunitare — suficiente de obicei pentru un singur live
 personal. Dacă vrei limite mai mari, îți poți face o cheie gratuită pe
 [eulerstream.com](https://www.eulerstream.com/) și o adaugi în Render
-la **Environment → Environment Variables**:
-
-```
-EULERSTREAM_API_KEY=cheia_ta_aici
-```
+la **Environment → Environment Variables**.
 
 ---
 
 ## 4. Două pagini, roluri diferite
 
-- **`/`** — pagina de afișaj: doar hartă, clasament, statistici. Fără
-  niciun buton. Asta e link-ul pe care îl deschizi pe ecranul filmat.
-- **`/admin`** — panoul de control: conectare TikTok, mod test,
-  reset. Protejat cu parolă (`ADMIN_PASSWORD`). Îl deschizi separat,
-  pe telefon sau pe alt monitor/tab, niciodată pe ecranul filmat.
+- **`/`** — pagina de afișaj: titlu, top 5 susținători, hartă, banner
+  cu îndemn. Fără niciun buton, fără clasament complet — doar poziția
+  se vede pe hartă prin numărul de rang și culoare. Asta e link-ul pe
+  care îl deschizi pe ecranul filmat.
+- **`/admin`** — panoul de control: conectare TikTok, mod test (cu
+  toate cele 4 rarități), reset, plus **clasamentul complet** (toate
+  județele + toți susținătorii, cu puncte exacte). Protejat cu parolă
+  (`ADMIN_PASSWORD`). Îl deschizi separat, pe telefon sau alt monitor,
+  niciodată pe ecranul filmat.
 
 ## 5. Cum funcționează scorul
 
 - Cineva scrie în chat `CJ`, `Cluj`, `cluj` (fără diacritice merge la
-  fel) → județul Cluj primește **+1 punct**.
+  fel) → județul Cluj primește **+1 punct**, iar persoana respectivă
+  urcă un punct în clasamentul personal de susținători.
 - Dacă acea persoană trimite și un **cadou**, se calculează valoarea
   lui în "diamante" TikTok, se dublează (**×2**) și se adaugă la
-  ultimul județ pe care l-a scris în chat.
-- Dacă valoarea cadoului (înainte de ×2) trece de **99** (prag
-  configurabil din variabila de mediu `MEGA_GIFT_THRESHOLD`), pornește
-  o **animație mega** separată — mai mare, mai lungă, cu banner "SUPER
-  SUSȚINĂTOR LIVE", numele celui care a dat cadoul și județul lui.
-  Sub prag, apare animația normală de cadou (mai mică).
-- **Top 5 județe** (pe hartă și în clasament) au un contur/culoare
-  distinctă în funcție de loc: auriu (#1), argintiu (#2), bronz (#3),
-  turcoaz (#4), roz (#5) — restul județelor rămân colorate după
-  intensitatea scorului (gri → galben → roșu).
-- **Fiecare județ** are prescurtarea și locul afișate direct pe hartă
-  (ex. `CJ #1`). **București** e prea mic pe harta reală ca să se
-  vadă ceva pe el, așa că are propriul cerc, separat, în colțul
-  hărții, cu aceeași colorare și logică de rang ca restul.
-- Clasamentul din dreapta și harta din centru se actualizează instant
-  pentru toată lumea care are pagina deschisă (prin WebSocket).
+  ultimul județ pe care l-a scris în chat, plus la punctajul ei
+  personal.
+- Fiecare cadou primește o **raritate**, in functie de valoarea brută
+  (înainte de ×2): sub 10 = **comun**, 10-29 = **rar**, 30-99 =
+  **epic**, peste 99 = **legendar**. Pragurile sunt configurabile din
+  variabilele de mediu de mai sus.
+- La orice cadou (indiferent de raritate) apare pe ecran o "fighter
+  card" cu inițialele persoanei, numele ei, județul susținut și
+  punctele câștigate — stilul cardului (culoare, mărime, efecte)
+  variază după raritate; la **legendar** apare animația cea mai mare,
+  cu ecran întunecat și raze de lumină.
+- **Top 5 județe** de pe hartă au o culoare solidă distinctă în funcție
+  de loc: auriu (#1), argintiu (#2), portocaliu (#3), cyan (#4), mov
+  (#5) — restul județelor rămân gri-uniform, cu numărul de loc afișat
+  clar, cu cifre mari, negre.
+- **Top 5 susținători** (persoanele cu cele mai multe puncte adunate)
+  apar mereu într-un panou deasupra hărții, cu insignă de scut și
+  coroană pentru primul loc.
+- **București** e prea mic pe harta reală ca să se vadă ceva pe el,
+  așa că are propriul cerc, separat, în colțul hărții, cu aceeași
+  colorare și logică de rang ca restul.
+- Toate actualizările (hartă, susținători, animații) apar instant
+  pentru toată lumea care are pagina deschisă, prin WebSocket.
 
 Recunoașterea județului acceptă: codul auto (`CJ`, `AB`, `B` pentru
 București), numele complet cu sau fără diacritice (`Cluj`, `cluj`,
@@ -236,9 +268,9 @@ vezi/editează lista din `counties.py`.
 .
 ├── app.py                # server FastAPI: pagini, rute, WebSocket, salvare periodica
 ├── auth.py                 # login cu parola pentru /admin (sesiuni in memorie)
-├── tiktok_bridge.py           # conectarea la TikTokLive (comentarii, cadouri, mega gift)
+├── tiktok_bridge.py           # conectarea la TikTokLive + calcul raritate cadou
 ├── counties.py                  # cele 42 de judete + logica de identificare
-├── game_state.py                  # scorurile curente + persistenta pe disc
+├── game_state.py                  # scoruri judete + sustinatori + persistenta pe disc
 ├── connection_manager.py            # broadcast WebSocket catre browsere
 ├── requirements.txt
 ├── Procfile                          # comanda de pornire pentru Render
@@ -246,11 +278,11 @@ vezi/editează lista din `counties.py`.
 ├── .env.example
 └── static/
     ├── index.html                      # pagina de afisaj (fara controale)
-    ├── admin.html                        # pagina de admin (login + controale)
+    ├── admin.html                        # pagina de admin (login + controale + clasament complet)
     ├── admin.js                            # logica paginii de admin
     ├── admin.css                             # stiluri specifice paginii de admin
     ├── style.css                               # design comun (impartit de ambele pagini)
-    ├── app.js                                    # logica paginii de afisaj (WebSocket, harta, clasament)
+    ├── app.js                                    # logica paginii de afisaj (WebSocket, harta, sustinatori)
     └── data/romania.js                             # coordonatele SVG ale celor 42 de judete
 ```
 
@@ -260,5 +292,8 @@ vezi/editează lista din `counties.py`.
   Render, gratuit la nivel de bază) dacă vrei clasament pe termen
   lung, nu doar per-live.
 - Un mod "rundă cu timp" (ex. 3 ore) cu reset automat.
-- Sunet la fiecare cadou / mega cadou (fișier audio redat din browser).
-- Afișarea celor mai activi 5 utilizatori, nu doar a județelor.
+- Sunet la fiecare cadou / cadou legendar (fișier audio redat din browser).
+- Poza reală de profil TikTok în loc de inițiale pe fighter card
+  (biblioteca TikTokLive are o metodă `get_avatar_url`, dar necesită
+  testare suplimentară pentru avatare ale altor useri, nu doar ale
+  streamerului).

@@ -14,6 +14,10 @@ services:
         sync: false
       - key: MEGA_GIFT_THRESHOLD
         value: "99"
+      - key: RARE_THRESHOLD
+        value: "10"
+      - key: EPIC_THRESHOLD
+        value: "30"
       - key: STATE_FILE
         value: /var/data/state.json
     disk:

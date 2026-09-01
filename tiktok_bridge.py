@@ -7,11 +7,14 @@ nevoie de login sau parola, doar de @username-ul contului care da live.
 
 Fluxul:
   - un comentariu care contine codul/numele unui judet -> +1 punct
+    pentru judet, si +1 in clasamentul personal al utilizatorului
+    (sustinatori)
   - un cadou trimis de un utilizator -> se calculeaza valoarea lui in
     "diamante" TikTok, se dubleaza (x2) si se aduna la ultimul judet
-    scris de acel utilizator in chat
-  - daca valoarea cadoului (inainte de x2) trece de 99 -> animatie
-    "mega" separata, cu numele celui care a dat si judetul lui
+    scris de acel utilizator in chat, plus in clasamentul lui personal
+  - fiecare cadou primeste o "raritate" in functie de valoare:
+    comun / rar / epic / legendar (peste prag) - folosita de front-end
+    pentru animatia de tip "fighter card"
 """
 import asyncio
 import os
@@ -43,9 +46,21 @@ _API_KEY = os.getenv("EULERSTREAM_API_KEY")
 if _API_KEY:
     WebDefaults.tiktok_sign_api_key = _API_KEY
 
-# Peste cate "diamante" (valoarea cadoului inainte de x2) declansam
-# animatia mega, distincta de un cadou obisnuit.
-MEGA_GIFT_THRESHOLD = int(os.getenv("MEGA_GIFT_THRESHOLD", "99"))
+# Praguri de raritate pentru cadouri, in functie de valoarea bruta
+# (numarul de "diamante", inainte de dublarea x2).
+RARE_THRESHOLD = int(os.getenv("RARE_THRESHOLD", "10"))
+EPIC_THRESHOLD = int(os.getenv("EPIC_THRESHOLD", "30"))
+MEGA_GIFT_THRESHOLD = int(os.getenv("MEGA_GIFT_THRESHOLD", "99"))  # = prag "legendar"
+
+
+def rarity_for(raw_value: int) -> str:
+    if raw_value > MEGA_GIFT_THRESHOLD:
+        return "legendary"
+    if raw_value >= EPIC_THRESHOLD:
+        return "epic"
+    if raw_value >= RARE_THRESHOLD:
+        return "rare"
+    return "common"
 
 
 def _extract_diamond_value(event: GiftEvent) -> int:
@@ -109,7 +124,8 @@ class TikTokBridge:
                 if c is None:
                     return
                 STATE.last_county_by_user[event.user.unique_id] = county["id"]
-                STATE.mark_dirty()
+                user_label = event.user.nickname or event.user.unique_id
+                STATE.add_supporter_points(event.user.unique_id, user_label, 1)
                 await MANAGER.broadcast({
                     "event": "hit",
                     "county": c.code,
@@ -117,7 +133,10 @@ class TikTokBridge:
                     "score": c.score,
                     "points": 1,
                     "gift": False,
-                    "user": event.user.nickname or event.user.unique_id,
+                    "user": user_label,
+                    "top_supporters": [
+                        {"name": s.name, "points": s.points} for s in STATE.top_supporters(5)
+                    ],
                 })
             except Exception as exc:  # nu lasa un comentariu ciudat sa pice conexiunea
                 client.logger.warning(f"Eroare la procesarea comentariului: {exc}")
@@ -141,25 +160,29 @@ class TikTokBridge:
                 unit_value = _extract_diamond_value(event)
                 gift_value = unit_value * repeat_count  # valoare bruta, inainte de x2
                 points = gift_value * 2  # regula: cadourile se pun x2
+                rarity = rarity_for(gift_value)
 
                 c = STATE.add_point(county_id, points)
                 if c is None:
                     return
-                STATE.mark_dirty()
 
                 user_label = event.user.nickname or event.user.unique_id
+                STATE.add_supporter_points(event.user.unique_id, user_label, points)
                 gift_name = getattr(gift, "name", "cadou")
-                is_mega = gift_value > MEGA_GIFT_THRESHOLD
 
                 await MANAGER.broadcast({
-                    "event": "mega_gift" if is_mega else "gift",
+                    "event": "mega_gift" if rarity == "legendary" else "gift",
                     "county": c.code,
                     "title": c.title,
                     "score": c.score,
                     "points": points,
                     "value": gift_value,
+                    "rarity": rarity,
                     "user": user_label,
                     "gift_name": gift_name,
+                    "top_supporters": [
+                        {"name": s.name, "points": s.points} for s in STATE.top_supporters(5)
+                    ],
                 })
             except Exception as exc:
                 client.logger.warning(f"Eroare la procesarea cadoului: {exc}")

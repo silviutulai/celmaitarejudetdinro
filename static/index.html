@@ -5,131 +5,43 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cel mai tare județ din România</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Space+Grotesk:wght@500;700&family=Baloo+2:wght@700;800&family=Inter:wght@500;600;700;800&family=Teko:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<div class="app">
+<div class="stage">
 
-  <!-- ===================== HEADER ===================== -->
-  <header class="header">
-    <div class="brand">
-      <div class="flag-chip"><i></i><i></i><i></i></div>
-      <div>
-        <h1>Cel mai tare <b>județ</b> din România</h1>
-        <p>Susține-ți județul din chat. Clasamentul se actualizează live.</p>
-      </div>
-    </div>
-    <div class="header-right">
-      <div class="pill" id="viewersPill">
-        <span class="dot"></span>
-        <span id="viewersCount">0</span> viewers
-      </div>
-      <div class="pill" id="livePill">
-        <span class="dot"></span>
-        <span id="liveLabel">OFFLINE</span>
-      </div>
-    </div>
-  </header>
-
-  <!-- ===================== MAIN GRID ===================== -->
-  <div class="main">
-
-    <!-- LEFT: legenda (doar informativ, fara controale - pagina asta se filmeaza) -->
-    <div class="left-col">
-      <div class="panel">
-        <div class="panel-title">⚡ Cum funcționează</div>
-        <div class="legend-item">
-          <div class="legend-ic">💬</div>
-          <div class="legend-txt">
-            <b>Scrie județul în chat</b>
-            <span>Codul (CJ) sau numele (Cluj) = +1 punct</span>
-          </div>
-        </div>
-        <div class="legend-item">
-          <div class="legend-ic gift">🎁</div>
-          <div class="legend-txt">
-            <b>Cadourile se pun la ×2</b>
-            <span>Bonus pentru ultimul județ scris de cel care dă cadou</span>
-          </div>
-        </div>
-        <div class="legend-item">
-          <div class="legend-ic">🔥</div>
-          <div class="legend-txt">
-            <b>Cadou mare = animație mega</b>
-            <span>Apare cu numele susținătorului și județul lui</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- CENTER: map -->
-    <div class="panel map-col">
-      <svg id="map-svg" viewBox="0 0 612.36395 432.29416" xmlns="http://www.w3.org/2000/svg">
-        <g id="path-group"></g>
-      </svg>
-      <div class="map-hint">scrie numele județului tău în comentarii ↑</div>
-
-      <!-- Bucuresti e prea mic pe harta, ca sa fie citibil primeste propriul cerc -->
-      <div class="buc-circle" id="bucCircle">
-        <span class="buc-rank" id="bucRank">#—</span>
-        <span class="buc-code">B</span>
-        <span class="buc-name">București</span>
-        <span class="buc-score num" id="bucScore">0</span>
-      </div>
-    </div>
-
-    <!-- RIGHT: leaderboard + activity feed -->
-    <div class="right-col">
-      <div class="panel board-panel">
-        <div class="panel-title">🏆 Clasament live</div>
-        <div class="board-list" id="boardList"></div>
-      </div>
-      <div class="panel feed-panel">
-        <div class="panel-title">💬 Activitate live</div>
-        <div class="feed-list" id="feedList">
-          <div class="feed-empty">Aici apar comentariile și cadourile pe măsură ce vin.</div>
-        </div>
-      </div>
-    </div>
-
+  <div class="status-pill" id="statusPill">
+    <span class="dot"></span>
+    <span id="statusLabel">OFFLINE</span>
+    <span class="viewers"><span id="viewersCount">0</span> 👁</span>
   </div>
 
-  <!-- ===================== BOTTOM STATS ===================== -->
-  <div class="stats-bar">
-    <div class="stat-card">
-      <div class="stat-ic">⚡</div>
-      <div>
-        <div class="stat-num" id="statTotal">0</div>
-        <div class="stat-lbl">Puncte acumulate</div>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-ic">🗺️</div>
-      <div>
-        <div class="stat-num" id="statActive">0 / 42</div>
-        <div class="stat-lbl">Județe în competiție</div>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-ic">📈</div>
-      <div>
-        <div class="stat-num" id="statGap">0</div>
-        <div class="stat-lbl">Diferență locul 1–2</div>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-ic">⏱️</div>
-      <div>
-        <div class="stat-num" id="statTime">--:--:--</div>
-        <div class="stat-lbl">Timp conectat</div>
-      </div>
+  <div class="titlebar">
+    <span class="tline"></span>
+    <h1>CEL MAI TARE JUDEȚ DIN ROMÂNIA</h1>
+    <span class="tline right"></span>
+  </div>
+
+  <div class="supporters-bar" id="supportersBar"></div>
+
+  <div class="map-wrap">
+    <svg id="map-svg" viewBox="0 0 612.36395 432.29416" xmlns="http://www.w3.org/2000/svg">
+      <g id="path-group"></g>
+    </svg>
+    <div class="buc-circle" id="bucCircle">
+      <span class="buc-rank">#—</span>
+      <span class="buc-code">B</span>
+      <span class="buc-name">București</span>
+      <span class="buc-score">0</span>
     </div>
   </div>
+
+  <div class="cta-bar">SCRIE JUDEȚUL ÎN CHAT · CADOURILE SE PUN ×2</div>
 
 </div>
 
-<div class="gift-overlay" id="giftOverlay"></div>
+<div class="gift-layer" id="giftLayer"></div>
 
 <script src="/static/data/romania.js"></script>
 <script src="/static/app.js"></script>
