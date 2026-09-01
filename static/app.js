@@ -9,7 +9,6 @@ const BUCURESTI_ID = 'RO-B';
 const stageWrap = document.getElementById('stageWrap');
 const svg = document.getElementById('map-svg');
 const pathGroup = document.getElementById('path-group');
-const bucCircle = document.getElementById('bucCircle');
 const supportersBar = document.getElementById('supportersBar');
 const countiesBar = document.getElementById('countiesBar');
 const giftLayer = document.getElementById('giftLayer');
@@ -65,15 +64,7 @@ function paintMap(){
     if (inTop5){ el.classList.add('top5'); el.classList.add(rankTierClass(idx)); }
   });
 
-  const bucScore = counties[BUCURESTI_ID]?.score || 0;
-  const bucIdx = rankIndexById[BUCURESTI_ID];
-  const bucInTop5 = mx > 0 && bucIdx < 5;
-  bucCircle.classList.remove('tier-1','tier-2','tier-3','tier-4','tier-5','top5');
-  if (bucInTop5){ bucCircle.classList.add('top5'); bucCircle.classList.add(rankTierClass(bucIdx)); }
-  bucCircle.querySelector('.buc-score').textContent = bucScore;
-  bucCircle.querySelector('.buc-rank').textContent = `#${bucIdx + 1}`;
-
-  renderTopCounties(ranked);
+  renderTopCounties(ranked, rankIndexById);
 }
 
 function initials(name){
@@ -101,33 +92,41 @@ function renderSupporters(list){
     </div>`).join('');
 }
 
-// ---------------- top 3 judete (sub top 3 jucatori) ----------------
-function renderTopCounties(rankedCounties){
+// ---------------- top 3 judete (sub top 3 jucatori) + chip separat pt Bucuresti ----------------
+// Bucuresti e prea mic pe harta reala ca sa se vada ceva pe el, asa ca
+// primeste mereu propriul chip aici, in loc de un cerc suprapus pe harta.
+function renderTopCounties(rankedCounties, rankIndexById){
   const top = (rankedCounties || []).filter(c => c.score > 0).slice(0, 3);
-  countiesBar.innerHTML = top.map((c, idx) => `
+  let html = top.map((c, idx) => `
     <div class="county-mini r${idx+1}">
       <span class="cm-rank">${idx+1}</span>
       <span class="cm-name">${escapeHtml(c.title)}</span>
       <span class="cm-pts">${c.score} pct</span>
     </div>`).join('');
+
+  const bucInTop3 = top.some(c => c.id === BUCURESTI_ID);
+  if (!bucInTop3){
+    const buc = counties[BUCURESTI_ID];
+    const bucRank = (rankIndexById[BUCURESTI_ID] ?? 0) + 1;
+    html += `
+      <div class="county-mini buc">
+        <span class="cm-icon">🏛</span>
+        <span class="cm-name">București</span>
+        <span class="cm-pts">${buc ? buc.score : 0} pct</span>
+      </div>`;
+  }
+  countiesBar.innerHTML = html;
 }
 
 // ---------------- animatie mica la fiecare comentariu (numele langa judet) ----------------
 function popCommentName(countyId, name){
   const el = document.getElementById(countyId);
-  const isBuc = countyId === BUCURESTI_ID;
-  let x, y;
-  if (isBuc){
-    const r = bucCircle.getBoundingClientRect();
-    x = r.left + r.width/2; y = r.top;
-  } else {
-    if (!el) return;
-    const svgRect = svg.getBoundingClientRect();
-    const vb = svg.viewBox.baseVal;
-    const bb = el.getBBox();
-    x = svgRect.left + (bb.x + bb.width/2 - vb.x) * (svgRect.width / vb.width);
-    y = svgRect.top + (bb.y - vb.y) * (svgRect.height / vb.height);
-  }
+  if (!el) return;
+  const svgRect = svg.getBoundingClientRect();
+  const vb = svg.viewBox.baseVal;
+  const bb = el.getBBox();
+  const x = svgRect.left + (bb.x + bb.width/2 - vb.x) * (svgRect.width / vb.width);
+  const y = svgRect.top + (bb.y - vb.y) * (svgRect.height / vb.height);
   const pop = document.createElement('div');
   pop.className = 'comment-pop';
   pop.innerHTML = `<span class="cp-plus">+1</span> ${escapeHtml(name)}`;

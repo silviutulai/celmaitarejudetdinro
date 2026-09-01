@@ -131,6 +131,11 @@ html,body{margin:0;padding:0;width:100%;height:100%;
 }
 .county-mini.r1 .cm-pts{ color:var(--legendary); }
 
+/* chip special pentru Bucuresti - prea mic pe harta reala ca sa se
+   vada ceva pe el, asa ca sta mereu aici, langa top 3 judete */
+.county-mini.buc{ border-color:#3A4256; border-style:dashed; }
+.cm-icon{ font-size:12px; flex-shrink:0; }
+
 .map-wrap{position:relative;flex:1 1 auto;min-height:0;width:100%;max-width:1000px;display:flex;align-items:center;justify-content:center;
   margin-bottom:8px;
   background:#111116;
@@ -144,19 +149,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;
 .jud.tier-3{fill:#E8752E;stroke:#E08A4D;filter:drop-shadow(0 0 10px #E08A4D);}
 .jud.tier-4{fill:#35C7F0;stroke:var(--rare);filter:drop-shadow(0 0 10px var(--rare));}
 .jud.tier-5{fill:#9B4FE0;stroke:var(--epic);filter:drop-shadow(0 0 10px var(--epic));}
-.buc-circle{position:absolute;right:5%;bottom:6%;width:94px;height:94px;border-radius:50%;
-  background:var(--zero-fill);display:flex;flex-direction:column;align-items:center;justify-content:center;
-  border:2px solid #2A2A33;box-shadow:0 0 0 4px #0A0E1A, 0 10px 24px rgba(0,0,0,0.6);
-  transition:background .5s ease;}
-.buc-circle.tier-1{ background:#F0B400; box-shadow:0 0 0 4px #0A0E1A, 0 0 18px var(--legendary); }
-.buc-circle.tier-2{ background:#D3DCE8; box-shadow:0 0 0 4px #0A0E1A, 0 0 14px #C9CEDB; }
-.buc-circle.tier-3{ background:#E8752E; box-shadow:0 0 0 4px #0A0E1A, 0 0 14px #E08A4D; }
-.buc-circle.tier-4{ background:#35C7F0; box-shadow:0 0 0 4px #0A0E1A, 0 0 14px var(--rare); }
-.buc-circle.tier-5{ background:#9B4FE0; box-shadow:0 0 0 4px #0A0E1A, 0 0 14px var(--epic); }
-.buc-circle .buc-rank{font-size:9px;color:#6A6A76;font-family:'Teko',sans-serif;}
-.buc-circle .buc-code{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;color:#111116;}
-.buc-circle .buc-name{font-size:9px;color:#33333B;font-weight:600;}
-.buc-circle .buc-score{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;color:#111116;}
 .cta-bar{
   margin-top:8px;font-family:'Teko',sans-serif;font-weight:600;font-size:clamp(11px,3.6cqw,15px);letter-spacing:1.1px;
   padding:5px 20px;flex-shrink:0;max-width:92%;text-align:center;
